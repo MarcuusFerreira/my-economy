@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Button, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 
 function ProfileScreen() {
   // Função para lidar com o clique no botão de sair
@@ -18,7 +18,9 @@ function ProfileScreen() {
       <Text style={styles.label}>Data de nascimento</Text>
       <Text style={styles.value}>09/12/1987</Text>
       <View style={styles.buttonContainer}>
-        <Button title="SAIR" color="#4CAF50" onPress={handleLogout} />
+        <TouchableOpacity style={styles.button} onPress={handleLogout}>
+          <Text style={styles.buttonText}>SAIR</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -50,17 +52,19 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 32,
     width: '80%',
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
+    alignItems: 'center', // Centraliza o botão dentro do contêiner
   },
   button: {
     backgroundColor: '#4CAF50',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 32,
-    textAlign: 'center',
+    alignItems: 'center', // Centraliza o texto dentro do botão
+  },
+  buttonText: {
     color: '#fff',
     fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

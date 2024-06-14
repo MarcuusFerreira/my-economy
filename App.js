@@ -1,26 +1,26 @@
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-
-import Signin from './src/pages/autenticação/Signin';
-import Signup from './src/pages/autenticação/Signup';
 import { enableScreens } from 'react-native-screens';
-import Home from './src/pages/Home';
-import MyTabs from './src/navegacao/MyTabs';
+
 
 import Signin from './src/pages/Autenticacao/Signin';
 import Signup from './src/pages/Autenticacao/Signup';
 import MyTabs from './src/Navegacao/MyTabs';
+import ExpensesScreen from './src/pages/Expenses';
+
+// Ativando telas nativas para melhorar a performance
+enableScreens();
 
 const Stack = createStackNavigator();
-enableScreens();
-function App() {
 
 function AuthStack() {
   return (
     <Stack.Navigator initialRouteName="Signin">
       <Stack.Screen name="Signin" component={Signin} options={{ headerShown: false }} />
       <Stack.Screen name="Signup" component={Signup} options={{ headerShown: false }} />
+      <Stack.Screen name="Expenses" component={ExpensesScreen} options={{headerShown: false}} />
+      <Stack.Screen name="Main" component={MyTabs} />
     </Stack.Navigator>
   );
 }
@@ -34,16 +34,10 @@ function MainStack() {
 }
 
 function App() {
-  const isUserLoggedIn = true; // Ajuste isso para simular o usuário logado
+  const isUserLoggedIn = true; // Ajuste isso conforme necessário para simular a autenticação
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Signin">
-        <Stack.Screen name="Signin" component={Signin} />
-        <Stack.Screen name="Signup" component={Signup} />
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="Main" component={MyTabs} />
-      </Stack.Navigator>
       {isUserLoggedIn ? <MainStack /> : <AuthStack />}
     </NavigationContainer>
   );

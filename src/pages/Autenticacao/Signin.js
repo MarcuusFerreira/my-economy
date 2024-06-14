@@ -28,8 +28,9 @@ export default function Signin({ navigation }) {
       />
 
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')} >
-        <Text style={styles.buttonText}>Entrar</Text>
+        
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Expenses')} >
+      <Text style={styles.buttonText}>Entrar</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
