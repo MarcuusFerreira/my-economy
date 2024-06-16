@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
-
+import { saveData } from '../service/data'
 
 export default function Login({ navigation }) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
 
+
     const entrar = async () => {
         console.log(email)
         console.log(password)
-        const URL = 'http://192.168.0.186:9002/singin'
+        const URL = 'http://192.168.0.138:9002/singin'
         const header = {
             'Content-Type': 'application/json'
         }
@@ -26,7 +27,8 @@ export default function Login({ navigation }) {
         console.log(response.status)
         if (response.ok) {
             const jsonResponse = await response.json()
-            console.log('Resposta do servidor: ', jsonResponse)
+            saveData(jsonResponse)
+            navigation.navigate("Main")
         }
     }
     return (

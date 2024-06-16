@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import { TextInputMask } from 'react-native-masked-text';
+import { saveData } from '../service/data'
 
 export default function Cadastro({ navigation }) {
     const [name, setName] = useState('')
@@ -8,11 +9,12 @@ export default function Cadastro({ navigation }) {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [birthday, setBirthday] = useState('')
+
     const register = async () => {
         if (password == confirmPassword) {
             const [dia, mes, ano] = birthday.split('/')
             const date = `${ano}-${mes}-${dia}`
-            const URL = 'http://192.168.0.186:9002/singup'
+            const URL = 'http://192.168.0.138:9002/singup'
             const header = {
                 'Content-Type': 'application/json'
             }
@@ -32,7 +34,8 @@ export default function Cadastro({ navigation }) {
             console.log(response.status)
             if (response.ok) {
                 const jsonResponse = await response.json()
-                console.log(jsonResponse)
+                saveData(jsonResponse)
+                navigation.navigate("Main")
             }
         }
     }
