@@ -11,20 +11,32 @@ export default function Despesa() {
     const [mes, setMes] = useState(null);
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([
-        { label: 'Janeiro', value: '01' },
-        { label: 'Fevereiro', value: '02' },
-        { label: 'Março', value: '03' },
-        { label: 'Abril', value: '04' },
-        { label: 'Maio', value: '05' },
-        { label: 'Junho', value: '06' },
-        { label: 'Julho', value: '07' },
-        { label: 'Agosto', value: '08' },
-        { label: 'Setembro', value: '09' },
-        { label: 'Outubro', value: '10' },
-        { label: 'Novembro', value: '11' },
-        { label: 'Dezembro', value: '12' }
+        { label: 'Janeiro/2024', value: '2024-01' },
+        { label: 'Fevereiro/2024', value: '2024-02' },
+        { label: 'Março/2024', value: '2024-03' },
+        { label: 'Abril/2024', value: '2024-04' },
+        { label: 'Maio/2024', value: '2024-05' },
+        { label: 'Junho/2024', value: '2024-06' },
+        { label: 'Julho/2024', value: '2024-07' },
+        { label: 'Agosto/2024', value: '2024-08' },
+        { label: 'Setembro/2024', value: '2024-09' },
+        { label: 'Outubro/2024', value: '2024-10' },
+        { label: 'Novembro/2024', value: '2024-11' },
+        { label: 'Dezembro/2024', value: '2024-12' },
+        { label: 'Janeiro/2026', value: '2025-01' },
+        { label: 'Fevereiro/2025', value: '2025-02' },
+        { label: 'Março/2025', value: '2025-03' },
+        { label: 'Abril/2025', value: '2025-04' },
+        { label: 'Maio/2025', value: '2025-05' },
+        { label: 'Junho/2025', value: '2025-06' },
+        { label: 'Julho/2025', value: '2025-07' },
+        { label: 'Agosto/2025', value: '2025-08' },
+        { label: 'Setembro/2025', value: '2025-09' },
+        { label: 'Outubro/2025', value: '2025-10' },
+        { label: 'Novembro/2025', value: '2025-11' },
+        { label: 'Dezembro/2025', value: '2025-12' }
     ]);
-    const [data, setData] = useState([]); // Adiciona o estado para armazenar as despesas
+    const [data, setData] = useState([]);
 
     const loadData = async () => {
         try {
@@ -64,8 +76,7 @@ export default function Despesa() {
 
                 if (response.ok) {
                     const json = await response.json();
-                    console.log('Despesas:', json); // Adicione esse console.log para verificar os dados recebidos
-                    setData(json); // Atualiza o estado com as despesas recebidas
+                    setData(json);
                 } else {
                     console.log('Erro ao buscar despesas', response.status);
                 }
@@ -81,9 +92,8 @@ export default function Despesa() {
                 userId: userData.id,
                 descricao: descricao,
                 valor: valor,
-                mesReferencia: `2024-${mes}`
+                mesReferencia: mes
             };
-            console.log(body)
             const header = {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${userData.token}`
@@ -95,9 +105,10 @@ export default function Despesa() {
                     body: JSON.stringify(body)
                 });
                 if (response.ok) {
-                    console.log("cadastrou")
                     const json = await response.json();
-                    console.log(json);
+                    setDescricao('')
+                    setMes(null)
+                    setValor('')
                     fetchDespesas();
                 } else {
                     console.log('Erro ao registrar despesa', response.status);
@@ -123,7 +134,7 @@ export default function Despesa() {
                 });
                 if (response.ok) {
                     console.log("Despesa removida");
-                    fetchDespesas(); // Atualiza a lista de despesas após remover uma
+                    fetchDespesas(); 
                 } else {
                     console.log('Erro ao remover despesa', response.status);
                 }
@@ -132,9 +143,6 @@ export default function Despesa() {
             }
         }
     };
-
-    // Adicione um log para verificar os dados antes de renderizar o FlatList
-    console.log("Dados das despesas: ", data);
 
     return (
         <View style={styles.container}>

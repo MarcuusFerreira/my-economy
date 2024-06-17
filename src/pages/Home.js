@@ -1,29 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DropDownPicker from 'react-native-dropdown-picker';
 import { Bar } from 'react-native-progress';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Home({ navigation }) {
     const [userData, setUserData] = useState(null);
-    const [mes, setMes] = useState(null);
-    const [open, setOpen] = useState(false);
-    const [items, setItems] = useState([
-        { label: 'Janeiro', value: 1 },
-        { label: 'Fevereiro', value: 2 },
-        { label: 'Março', value: 3 },
-        { label: 'Abril', value: 4 },
-        { label: 'Maio', value: 5 },
-        { label: 'Junho', value: 6 },
-        { label: 'Julho', value: 7 },
-        { label: 'Agosto', value: 8 },
-        { label: 'Setembro', value: 9 },
-        { label: 'Outubro', value: 10 },
-        { label: 'Novembro', value: 11 },
-        { label: 'Dezembro', value: 12 }
-    ]);
-    const [valor, setValor] = useState(132.98);
-    const [total, setTotal] = useState(3000);
+    const [valor, setValor] = useState(0);
+    const [total, setTotal] = useState(0);
+    const [economizou, setEconomizou] = useState(0);
 
     const loadData = async () => {
         try {
@@ -40,9 +25,83 @@ export default function Home({ navigation }) {
         }
     };
 
+    const fetchDespesas = async () => {
+        try {
+            if (userData && userData.token) {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userData.token}`
+                };
+                const response = await fetch('http://192.168.0.138:9002/despesa/current-month', {
+                    method: 'GET',
+                    headers: headers
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Despesas:', data);
+                    setValor(Number(data)); // Supondo que `valor` seja um campo no objeto `data`
+                } else {
+                    console.error("Erro ao buscar despesas: ", response.statusText);
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao buscar dados do backend: ", error);
+        }
+    };
+
+    const fetchLimites = async () => {
+        try {
+            if (userData && userData.token) {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userData.token}`
+                };
+                const response = await fetch('http://192.168.0.138:9002/limite/current-month', {
+                    method: 'GET',
+                    headers: headers
+                });
+
+                console.log(response.status)
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Limites:', data);
+                    setTotal(Number(data)); // Supondo que `total` seja um campo no objeto `data`
+                } else {
+                    console.error("Erro ao buscar limites: ", response.statusText);
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao buscar dados do backend: ", error);
+        }
+    };
+
     useEffect(() => {
         loadData();
     }, []);
+
+    useEffect(() => {
+        if (valor !== null && total !== null) {
+            calcular();
+        }
+    }, [valor, total]);
+
+    useFocusEffect(
+        useCallback(() => {
+            if (userData) {
+                fetchDespesas();
+                fetchLimites();
+            }
+        }, [userData])
+    );
+
+    const calcular = () => {
+        if (total > 0) {
+            setEconomizou(total - valor);
+        } else {
+            setEconomizou(0);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -50,7 +109,7 @@ export default function Home({ navigation }) {
             <Text style={styles.subtitle}>É bom ter você por aqui</Text>
             <View style={styles.box}>
                 <Text style={styles.boxText}>Continue assim!</Text>
-                <Text style={styles.textEco}>Você economizou R${total - valor}</Text>
+                <Text style={styles.textEco}>Você economizou R${economizou}</Text>
             </View>
             <Text style={styles.progress}>Progresso</Text>
             <Text>R${valor}/R${total}</Text>
@@ -87,7 +146,7 @@ const styles = StyleSheet.create({
     box: {
         backgroundColor: '#4CAF50',
         width: '80%',
-        height: '20%',
+        padding: 20,
         marginTop: 20,
         justifyContent: 'center',
         alignItems: 'center',
