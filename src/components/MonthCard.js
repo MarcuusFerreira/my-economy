@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-const MonthCard = ({id, mesAno, valor}) => {
+const MonthCard = ({id, mesAno, valor, onEdit, onDelete}) => {
     const remove = () => {
         console.log(id)
     }
@@ -13,10 +13,10 @@ const MonthCard = ({id, mesAno, valor}) => {
         <Text style={styles.amountText}>R${valor}</Text>
       </View>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} >
+        <TouchableOpacity style={styles.button} onPress={onEdit}>
           <Text style={styles.buttonText}>EDITAR</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={remove}>
+        <TouchableOpacity style={styles.button} onPress={onDelete}>
           <Text style={styles.buttonText}>EXCLUIR</Text>
         </TouchableOpacity>
       </View>

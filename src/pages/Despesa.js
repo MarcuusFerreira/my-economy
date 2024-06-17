@@ -6,12 +6,33 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Despesa() {
     const [userData, setUserData] = useState(null);
+    const [descricao, setDescricao] = useState('');
+    const [valor, setValor] = useState('');
+    const [mes, setMes] = useState(null);
+    const [open, setOpen] = useState(false);
+    const [items, setItems] = useState([
+        { label: 'Janeiro', value: '01' },
+        { label: 'Fevereiro', value: '02' },
+        { label: 'Março', value: '03' },
+        { label: 'Abril', value: '04' },
+        { label: 'Maio', value: '05' },
+        { label: 'Junho', value: '06' },
+        { label: 'Julho', value: '07' },
+        { label: 'Agosto', value: '08' },
+        { label: 'Setembro', value: '09' },
+        { label: 'Outubro', value: '10' },
+        { label: 'Novembro', value: '11' },
+        { label: 'Dezembro', value: '12' }
+    ]);
+    const [data, setData] = useState([]); // Adiciona o estado para armazenar as despesas
 
     const loadData = async () => {
         try {
             const userJson = await AsyncStorage.getItem('userData');
             if (userJson !== null) {
-                setUserData(JSON.parse(userJson)); 
+                setUserData(JSON.parse(userJson));
+            } else {
+                console.log('Nenhum dado encontrado no AsyncStorage');
             }
         } catch (error) {
             console.log("Erro ao carregar dados: ", error);
@@ -19,53 +40,101 @@ export default function Despesa() {
     };
 
     useEffect(() => {
-        loadData();
+        loadData(); // Carregar os dados do usuário ao montar o componente
     }, []);
 
-    const [open, setOpen] = useState(false);
-    const [descricao, setDescricao] = useState('');
-    const [valor, setValor] = useState('');
-    const [mes, setMes] = useState(null);
-    const [items, setItems] = useState([
-        { label: 'Janeiro', value: 1 },
-        { label: 'Fevereiro', value: 2 },
-        { label: 'Março', value: 3 },
-        { label: 'Abril', value: 4 },
-        { label: 'Maio', value: 5 },
-        { label: 'Junho', value: 6 },
-        { label: 'Julho', value: 7 },
-        { label: 'Agosto', value: 8 },
-        { label: 'Setembro', value: 9 },
-        { label: 'Outubro', value: 10 },
-        { label: 'Novembro', value: 11 },
-        { label: 'Dezembro', value: 12 }
-    ]);
-    
-    const data = [];
+    useEffect(() => {
+        if (userData) {
+            fetchDespesas();
+        }
+    }, [userData]);
+
+    const fetchDespesas = async () => {
+        if (userData) {
+            const header = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userData.token}`
+            };
+
+            try {
+                const response = await fetch(`http://192.168.0.138:9002/despesa/get?userId=${userData.id}`, {
+                    method: 'GET',
+                    headers: header
+                });
+
+                if (response.ok) {
+                    const json = await response.json();
+                    console.log('Despesas:', json); // Adicione esse console.log para verificar os dados recebidos
+                    setData(json); // Atualiza o estado com as despesas recebidas
+                } else {
+                    console.log('Erro ao buscar despesas', response.status);
+                }
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+            }
+        }
+    };
 
     const register = async () => {
-        const header = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userData.token}`
-        }
-        const body = {
-            userId: userData.id,
-            descricao: descricao,
-            valor: valor,
-            mesReferencia: `2024-${mes}`
-        }
-        const response = await fetch('http://localhost:9002/despesa/register', {
-            method: 'POST',
-            headers: header,
-            body: body
-        })
-        if (response.ok) {
-            const json = response.json()
-            console.log(json)
+        if (userData) {
+            const body = {
+                userId: userData.id,
+                descricao: descricao,
+                valor: valor,
+                mesReferencia: `2024-${mes}`
+            };
+            console.log(body)
+            const header = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userData.token}`
+            };
+            try {
+                const response = await fetch('http://192.168.0.138:9002/despesa/register', {
+                    method: 'POST',
+                    headers: header,
+                    body: JSON.stringify(body)
+                });
+                if (response.ok) {
+                    console.log("cadastrou")
+                    const json = await response.json();
+                    console.log(json);
+                    fetchDespesas();
+                } else {
+                    console.log('Erro ao registrar despesa', response.status);
+                }
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+            }
         } else {
-
+            console.log('Dados do usuário ou mês ausentes');
         }
-    }
+    };
+
+    const remover = async (id) => {
+        if (userData) {
+            const header = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userData.token}`
+            };
+            try {
+                const response = await fetch(`http://192.168.0.138:9002/despesa/remove?id=${id}`, {
+                    method: 'DELETE',
+                    headers: header
+                });
+                if (response.ok) {
+                    console.log("Despesa removida");
+                    fetchDespesas(); // Atualiza a lista de despesas após remover uma
+                } else {
+                    console.log('Erro ao remover despesa', response.status);
+                }
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+            }
+        }
+    };
+
+    // Adicione um log para verificar os dados antes de renderizar o FlatList
+    console.log("Dados das despesas: ", data);
 
     return (
         <View style={styles.container}>
@@ -75,14 +144,14 @@ export default function Despesa() {
                 onChangeText={setDescricao}
                 value={descricao}
                 placeholder="Descrição"
-                keyboardType="default" // Ajuste o tipo de teclado para texto
+                keyboardType="default"
             />
             <TextInput
                 style={styles.input}
                 onChangeText={setValor}
                 value={valor}
                 placeholder="Valor"
-                keyboardType="numeric" // Ajuste o tipo de teclado para número
+                keyboardType="numeric"
             />
             <DropDownPicker
                 open={open}
@@ -92,7 +161,7 @@ export default function Despesa() {
                 setValue={setMes}
                 setItems={setItems}
                 placeholder="Selecione um mês"
-                style={styles.dropdown} // Adicione estilo ao DropDownPicker
+                style={styles.dropdown}
             />
             <TouchableOpacity style={styles.btn} onPress={register}>
                 <Text style={styles.btnText}>Salvar</Text>
@@ -101,13 +170,13 @@ export default function Despesa() {
                 <Text style={styles.histTitle}>Histórico</Text>
                 <FlatList
                     data={data}
-                    keyExtractor={(item) => item.id.toString()} // Converte id para string
+                    keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
                         <DespesaCard
                             name={item.descricao}
                             value={item.valor}
                             onEdit={() => console.log('editar')}
-                            onDelete={() => console.log('deletar')}
+                            onDelete={() => remover(item.id)} // Corrigir a chamada onDelete
                         />
                     )}
                     contentContainerStyle={styles.flatListContainer}
@@ -128,7 +197,7 @@ const styles = StyleSheet.create({
         fontSize: 30,
         fontWeight: 'bold',
         marginBottom: 24,
-        alignSelf: 'center' // Centraliza o título
+        alignSelf: 'center'
     },
     input: {
         width: '100%',
@@ -140,7 +209,7 @@ const styles = StyleSheet.create({
         marginBottom: 16
     },
     dropdown: {
-        marginBottom: 16, // Adiciona margem inferior ao DropDownPicker
+        marginBottom: 16
     },
     btn: {
         marginTop: 16,
@@ -149,23 +218,23 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         backgroundColor: '#4CAF50',
         width: '100%',
-        height: 40,
+        height: 40
     },
     btnText: {
         color: '#FFF',
-        fontWeight: 'bold' // Torna o texto do botão mais destacado
+        fontWeight: 'bold'
     },
     hist: {
-        flex: 1, // Permite que a lista use todo o espaço disponível
-        marginTop: 24, // Adiciona margem superior ao histórico
+        flex: 1,
+        marginTop: 24
     },
     histTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 12,
-        alignSelf: 'center' // Centraliza o título do histórico
+        alignSelf: 'center'
     },
     flatListContainer: {
-        flexGrow: 1 // Garante que a lista ocupe todo o espaço disponível
+        flexGrow: 1
     }
 });

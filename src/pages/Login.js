@@ -8,8 +8,6 @@ export default function Login({ navigation }) {
 
 
     const entrar = async () => {
-        console.log(email)
-        console.log(password)
         const URL = 'http://192.168.0.138:9002/singin'
         const header = {
             'Content-Type': 'application/json'
@@ -24,7 +22,6 @@ export default function Login({ navigation }) {
             headers: header,
             body: JSON.stringify(body)
         })
-        console.log(response.status)
         if (response.ok) {
             const jsonResponse = await response.json()
             saveData(jsonResponse)

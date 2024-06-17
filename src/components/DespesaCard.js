@@ -7,7 +7,7 @@ const DespesaCard = ({ name, value, onEdit, onDelete }) => {
         <View style={styles.itemContainer}>
             <View style={styles.itemInfo}>
                 <Text style={styles.itemText}>{name}</Text>
-                <Text style={styles.itemText}>R${value.toFixed(2)}</Text>
+                <Text style={styles.itemText}>R${value}</Text>
             </View>
             <View style={styles.itemActions}>
                 <TouchableOpacity style={styles.actionButton} onPress={onEdit}>

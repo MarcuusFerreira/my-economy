@@ -22,39 +22,21 @@ export default function Home({ navigation }) {
         { label: 'Novembro', value: 11 },
         { label: 'Dezembro', value: 12 }
     ]);
-    const [valor, setValor] = useState(1100);
-    const total = 1500;
+    const [valor, setValor] = useState(132.98);
+    const [total, setTotal] = useState(3000);
 
     const loadData = async () => {
         try {
             const userJson = await AsyncStorage.getItem('userData');
             if (userJson !== null) {
-                setUserData(JSON.parse(userJson)); 
+                const parsedData = JSON.parse(userJson);
+                setUserData(parsedData);
+                console.log('User data loaded:', parsedData);
+            } else {
+                console.log('No user data found in AsyncStorage');
             }
         } catch (error) {
-            console.log("Erro ao carregar dados: ", error);
-        }
-    };
-
-    const fetchData = async () => {
-        if (userData) {
-            const header = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${userData.token}`
-            };
-            try {
-                const response = await fetch(`http://192.168.0.138:9002/resumo?userId=${userData.id}`, {
-                    method: 'GET',
-                    headers: header
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log(data);
-                    setValor(data.valor);
-                }
-            } catch (error) {
-                console.error('Erro ao buscar dados:', error);
-            }
+            console.error("Erro ao carregar dados: ", error);
         }
     };
 
@@ -62,38 +44,25 @@ export default function Home({ navigation }) {
         loadData();
     }, []);
 
-    useEffect(() => {
-        if (userData) {
-            fetchData();
-        }
-    }, [userData]);
-
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Olá {userData ? userData.name : "Carregando..."}</Text>
             <Text style={styles.subtitle}>É bom ter você por aqui</Text>
-            <DropDownPicker
-                open={open}
-                value={mes}
-                items={items}
-                setOpen={setOpen}
-                setValue={setMes}
-                setItems={setItems}
-                placeholder="Selecione um mês"
-            />
             <View style={styles.box}>
                 <Text style={styles.boxText}>Continue assim!</Text>
+                <Text style={styles.textEco}>Você economizou R${total - valor}</Text>
             </View>
             <Text style={styles.progress}>Progresso</Text>
             <Text>R${valor}/R${total}</Text>
             <Bar
-                progress={valor / total} 
-                width={300} 
-                height={20} 
+                progress={total > 0 ? valor / total : 0}
+                width={300}
+                height={20}
                 borderRadius={12}
-                color='#4EB758' 
+                color='#4EB758'
                 unfilledColor='#e0e0e0'
-                borderWidth={0}/>
+                borderWidth={0}
+            />
         </View>
     );
 }
@@ -118,7 +87,7 @@ const styles = StyleSheet.create({
     box: {
         backgroundColor: '#4CAF50',
         width: '80%',
-        height: '30%',
+        height: '20%',
         marginTop: 20,
         justifyContent: 'center',
         alignItems: 'center',
@@ -130,5 +99,10 @@ const styles = StyleSheet.create({
     },
     progress: {
         marginTop: 12
+    },
+    textEco: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#FFF'
     }
 });
