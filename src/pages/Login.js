@@ -8,7 +8,7 @@ export default function Login({ navigation }) {
 
 
     const entrar = async () => {
-        const URL = 'http://192.168.0.138:9002/singin'
+        const URL = 'http://192.168.48.198:9002/singin'
         const header = {
             'Content-Type': 'application/json'
         }

@@ -6,7 +6,7 @@ import MonthCard from '../components/MonthCard';
 
 export default function Limite() {
     const [userData, setUserData] = useState(null);
-    const [valor, setValor] = useState('');
+    const [valor, setValor] = useState(0);
     const [mes, setMes] = useState(null);
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([
@@ -22,7 +22,7 @@ export default function Limite() {
         { label: 'Outubro/2024', value: '2024-10' },
         { label: 'Novembro/2024', value: '2024-11' },
         { label: 'Dezembro/2024', value: '2024-12' },
-        { label: 'Janeiro/2026', value: '2025-01' },
+        { label: 'Janeiro/2025', value: '2025-01' },
         { label: 'Fevereiro/2025', value: '2025-02' },
         { label: 'Março/2025', value: '2025-03' },
         { label: 'Abril/2025', value: '2025-04' },
@@ -57,7 +57,7 @@ export default function Limite() {
             return;
         }
         try {
-            const response = await fetch(`http://192.168.0.138:9002/limite/get?userId=${userData.id}`, {
+            const response = await fetch(`http://192.168.48.198:9002/limite/get?userId=${userData.id}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -80,9 +80,9 @@ export default function Limite() {
             console.log("User data is not loaded yet");
             return;
         }
-        const URL = 'http://192.168.0.138:9002/limite/register';
+        const URL = 'http://192.168.48.198:9002/limite/register';
         const body = JSON.stringify({
-            limite: valor,
+            limite: parseFloat(valor),
             mesReferencia: mes,
             userId: userData.id
         });
@@ -114,7 +114,7 @@ export default function Limite() {
             return;
         }
         try {
-            const response = await fetch(`http://192.168.0.138:9002/limite/remove/${id}`, {
+            const response = await fetch(`http://192.168.48.198:9002/limite/remove/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

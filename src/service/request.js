@@ -17,7 +17,7 @@ const disparaRequest = async (method, path, body) => {
         loadData();
     }, []);
     console.log(userData.token)
-    const URL = `http://192.168.0.138:9002/${path}`
+    const URL = `http://192.168.48.198:9002/${path}`
     const response = await fetch(URL, {
         method: method,
         headers: {

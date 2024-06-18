@@ -14,7 +14,7 @@ export default function Cadastro({ navigation }) {
         if (password == confirmPassword) {
             const [dia, mes, ano] = birthday.split('/')
             const date = `${ano}-${mes}-${dia}`
-            const URL = 'http://192.168.0.138:9002/singup'
+            const URL = 'http://192.168.48.198:9002/singup'
             const header = {
                 'Content-Type': 'application/json'
             }

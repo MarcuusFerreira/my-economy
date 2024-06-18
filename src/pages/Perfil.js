@@ -29,7 +29,7 @@ export default function Perfil({ navigation }) {
     }
 
     const sair = async () => {
-        const URL = `http://192.168.0.138:9002/singout`
+        const URL = `http://192.168.48.198:9002/singout`
         const response = await fetch(URL, {
             method: 'POST',
             headers: {

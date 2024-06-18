@@ -69,7 +69,7 @@ export default function Despesa() {
             };
 
             try {
-                const response = await fetch(`http://192.168.0.138:9002/despesa/get?userId=${userData.id}`, {
+                const response = await fetch(`http://192.168.48.198:9002/despesa/get?userId=${userData.id}`, {
                     method: 'GET',
                     headers: header
                 });
@@ -99,7 +99,7 @@ export default function Despesa() {
                 'Authorization': `Bearer ${userData.token}`
             };
             try {
-                const response = await fetch('http://192.168.0.138:9002/despesa/register', {
+                const response = await fetch('http://192.168.48.198:9002/despesa/register', {
                     method: 'POST',
                     headers: header,
                     body: JSON.stringify(body)
@@ -128,7 +128,7 @@ export default function Despesa() {
                 'Authorization': `Bearer ${userData.token}`
             };
             try {
-                const response = await fetch(`http://192.168.0.138:9002/despesa/remove?id=${id}`, {
+                const response = await fetch(`http://192.168.48.198:9002/despesa/remove?id=${id}`, {
                     method: 'DELETE',
                     headers: header
                 });
