@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
         borderRadius: 10, 
         padding: 10, 
         marginVertical: 5,
-        marginHorizontal: 10 // Adiciona margem horizontal para separar os itens da borda
+        marginHorizontal: 10 
     },
     itemInfo: {
         flexDirection: 'row',
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row', 
     },
     actionButton: {
-        backgroundColor: '#388E3C', // Ajusta a cor de fundo para contraste
+        backgroundColor: '#388E3C',
         borderRadius: 5,
         padding: 8, 
         marginLeft: 5, 

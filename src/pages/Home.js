@@ -32,7 +32,7 @@ export default function Home({ navigation }) {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${userData.token}`
                 };
-                const response = await fetch('http://192.168.48.198:9002/despesa/current-month', {
+                const response = await fetch('http://192.168.0.12:9002/despesa/current-month', {
                     method: 'GET',
                     headers: headers
                 });
