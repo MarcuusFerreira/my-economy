@@ -39,9 +39,10 @@ export default function Home({ navigation }) {
                     const valorAtual = await response.json();
                     setValor(Number(valorAtual)); 
                 } else {
-                    console.error("Erro ao buscar despesas: ", response.statusText);
+                    Alert.alert("Erro ao buscar despesas", response.statusText);
                 }
             } catch (error) {
+                Alert.alert("Erro de Conexão", "Não foi possível conectar ao servidor para buscar despesas.");
                 console.error("Erro ao buscar dados do backend: ", error);
             }
         }
@@ -61,9 +62,10 @@ export default function Home({ navigation }) {
                     const totalAtual = await response.json();
                     setTotal(Number(totalAtual)); 
                 } else {
-                    console.error("Erro ao buscar limites: ", response.statusText);
+                    // Alert.alert("Erro ao buscar limites", response.statusText);
                 }
             } catch (error) {
+                Alert.alert("Erro de Conexão", "Não foi possível conectar ao servidor para buscar limites.");
                 console.error("Erro ao buscar dados do backend: ", error);
             }
         }
@@ -75,7 +77,7 @@ export default function Home({ navigation }) {
 
     useEffect(() => {
         if (total > 0 && valor !== null) {
-            setEconomizou(total - valor);
+            setEconomizou(Math.max(0, total - valor));
         }
     }, [valor, total]);
 
@@ -85,7 +87,7 @@ export default function Home({ navigation }) {
                 fetchDespesas();
                 fetchLimites();
             }
-        }, [userData, fetchDespesas, fetchLimites])
+        }, [userData])
     );
 
     return (
@@ -93,7 +95,7 @@ export default function Home({ navigation }) {
             <Text style={styles.title}>Olá {userData ? userData.name : "Carregando..."}</Text>
             <Text style={styles.subtitle}>É bom ter você por aqui</Text>
             <View style={styles.box}>
-                <Text style={styles.boxText}>Continue assim!</Text>
+                <Text style={styles.boxText}>{valor > total ? 'Você passou do limite' : 'Continue assim!'}</Text>
                 <Text style={styles.textEco}>Você economizou R${economizou}</Text>
             </View>
             <Text style={styles.progress}>Progresso</Text>
@@ -103,14 +105,13 @@ export default function Home({ navigation }) {
                 width={300}
                 height={20}
                 borderRadius={12}
-                color='#4EB758'
+                color={valor > total ? '#FF6347' : '#4EB758'}
                 unfilledColor='#e0e0e0'
                 borderWidth={0}
             />
         </View>
     );
 }
-
 
 const styles = StyleSheet.create({
     container: {
