@@ -1,32 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
-import { saveData } from '../service/data'
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { saveData } from '../service/data';
 
 export default function Login({ navigation }) {
-const [email, setEmail] = useState('')
-const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-const entrar = async () => {
-    const URL = 'http://192.168.0.12:9002/singin'
-    const header = {
-        'Content-Type': 'application/json'
-    }
+  const entrar = async () => {
+    const URL = 'http://192.168.0.12:9002/singin';
+    const headers = {
+      'Content-Type': 'application/json'
+    };
     const body = {
-        email: email,
-        password: password
-    }
-    console.log(body)
-    const response = await fetch(URL, {
+      email: email,
+      password: password
+    };
+
+    try {
+      const response = await fetch(URL, {
         method: 'POST',
-        headers: header,
+        headers: headers,
         body: JSON.stringify(body)
-    })
-    if (response.ok) {
-        const jsonResponse = await response.json()
-        saveData(jsonResponse)
-        navigation.navigate("Main")
+      });
+
+      if (response.ok) {
+        const jsonResponse = await response.json();
+        saveData(jsonResponse);
+        navigation.navigate("Main");
+      } else {
+        
+        Alert.alert("Erro de Login", "Email ou senha incorretos.");
+      }
+    } catch (error) {
+      Alert.alert("Erro de Conexão", "Não foi possível conectar ao servidor.");
     }
-}
+  };
+
 return (
     <View style={styles.container}>
         <Text style={styles.title}>Entrar</Text>

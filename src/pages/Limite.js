@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { TextInputMask } from 'react-native-masked-text';
 import MonthCard from '../components/MonthCard';
+import {isBefore,isSameMonth, parseISO, startOfMonth  } from 'date-fns';
 
 export default function Limite() {
     const [userData, setUserData] = useState(null);
-    const [valor, setValor] = useState(0);
+    const [valor, setValor] = useState('');
     const [mes, setMes] = useState(null);
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([
@@ -34,165 +36,174 @@ export default function Limite() {
         { label: 'Outubro/2025', value: '2025-10' },
         { label: 'Novembro/2025', value: '2025-11' },
         { label: 'Dezembro/2025', value: '2025-12' }
-    ]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [data, setData] = useState([]);
-
-    const loadData = async () => {
-        try {
-            const userJson = await AsyncStorage.getItem('userData');
-            if (userJson !== null) {
-                setUserData(JSON.parse(userJson));
-            }
-        } catch (error) {
-            console.log("Erro ao carregar dados: ", error);
-        } finally {
-            setIsLoading(false); // Dados carregados, seja com sucesso ou erro
-        }
-    };
-
-    const fetchData = async () => {
-        if (!userData) {
-            console.log("User data is not loaded yet");
-            return;
-        }
-        try {
-            const response = await fetch(`http://192.168.0.12:9002/limite/get?userId=${userData.id}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userData.token}`
+        ]);
+        const [isLoading, setIsLoading] = useState(true);
+        const [data, setData] = useState([]);
+    
+        useEffect(() => {
+            const loadData = async () => {
+                try {
+                    const userJson = await AsyncStorage.getItem('userData');
+                    if (userJson) {
+                        setUserData(JSON.parse(userJson));
+                    }
+                } catch (error) {
+                    Alert.alert("Erro", "Erro ao carregar dados do usuário.");
+                } finally {
+                    setIsLoading(false);
                 }
-            });
-            if (response.ok) {
-                const json = await response.json();
-                setData(json);
-            } else {
-                console.log("Failed to fetch data");
-            }
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        }
-    };
-
-    const register = async () => {
-        if (!userData) {
-            console.log("User data is not loaded yet");
-            return;
-        }
-        const URL = 'http://192.168.48.198:9002/limite/register';
-        const body = JSON.stringify({
-            limite: parseFloat(valor),
-            mesReferencia: mes,
-            userId: userData.id
-        });
-        console.log(body);
-        try {
-            const response = await fetch(URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userData.token}`
-                },
-                body: body
-            });
-            if (response.ok) {
-                setValor('')
-                setMes(null)
+            };
+            loadData();
+        }, []);
+    
+        useEffect(() => {
+            if (userData) {
                 fetchData();
-            } else {
-                console.log("Failed to save data");
             }
-        } catch (error) {
-            console.error("Error saving data:", error);
-        }
-    };
-
-    const remover = async (id) => {
-        if (!userData) {
-            console.log("User data is not loaded yet");
-            return;
-        }
-        try {
-            const response = await fetch(`http://192.168.48.198:9002/limite/remove/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userData.token}`
+        }, [userData]);
+    
+        const fetchData = async () => {
+            try {
+                const response = await fetch(`http://192.168.0.12:9002/limite/get?userId=${userData.id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userData.token}`
+                    }
+                });
+                if (response.ok) {
+                    const json = await response.json();
+                    setData(json);
+                } else {
+                    throw new Error("Falha ao buscar dados.");
                 }
-            });
-            if (response.ok) {
-                console.log("Removed");
-                fetchData();
-            } else {
-                console.log("Failed to remove data");
+            } catch (error) {
+                Alert.alert("Erro", error.message);
             }
-        } catch (error) {
-            console.error("Error removing data:", error);
-        }
-    };
-
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    useEffect(() => {
-        if (userData) {
-            fetchData();
-        }
-    }, [userData]);
-
-    return (
-        <View style={styles.container}>
-            {isLoading ? (
-                <Text>Loading...</Text>
-            ) : (
-                <>
-                    <Text style={styles.title}>Limite</Text>
-                    <TextInput
-                        style={styles.input}
-                        onChangeText={setValor}
-                        value={valor}
-                        placeholder="Valor"
-                        keyboardType="numeric"
-                    />
-                    <DropDownPicker
-                        open={open}
-                        value={mes}
-                        items={items}
-                        setOpen={setOpen}
-                        setValue={setMes}
-                        setItems={setItems}
-                        placeholder="Selecione um mês"
-                        style={styles.dropdown}
-                        containerStyle={styles.dropdownContainer}
-                    />
-                    <TouchableOpacity style={styles.btn} onPress={register} disabled={!userData}>
-                        <Text style={styles.btnText}>Salvar</Text>
-                    </TouchableOpacity>
-                    <View style={styles.consulta}>
-                        <Text style={styles.conText}>Consulta</Text>
-                        <FlatList
-                            data={data}
-                            keyExtractor={(item) => item.id.toString()}
-                            renderItem={({ item }) => (
-                                <MonthCard
-                                    id={item.id}
-                                    mesAno={item.mesReferencia}
-                                    valor={item.limite}
-                                    onEdit={() => console.log('editar')}
-                                    onDelete={(item) => remover(item.id)}
-                                />
-                            )}
-                            contentContainerStyle={styles.listContainer}
+        };
+    
+        const register = async () => {
+            if (!userData || !mes) {
+                Alert.alert("Erro", "É necessário selecionar um mês e estar logado.");
+                return;
+            }
+            const existingLimit = data.find(item => item.mesReferencia === mes);
+    if (existingLimit) {
+        Alert.alert("Erro", "Já existe um limite cadastrado para este mês.");
+        return;
+    }
+            try {
+                const body = JSON.stringify({
+                    limite: parseFloat(valor.replace(/[R$ ,.]/g, '')) / 100,
+                    mesReferencia: mes,
+                    userId: userData.id
+                });
+                const response = await fetch(`http://192.168.0.12:9002/limite/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userData.token}`
+                    },
+                    body: body
+                });
+                if (response.ok) {
+                    setValor('');
+                    setMes(null);
+                    fetchData();
+                } else {
+                    throw new Error("Falha ao salvar dados.");
+                }
+            } catch (error) {
+                Alert.alert("Erro de Registro", error.message);
+            }
+        };
+    
+        const editarOuRemover = async (id, mesReferencia, type) => {
+            const currentDate = startOfMonth(new Date());
+            const mesItem = parseISO(`${mesReferencia}-01`);
+            if (isBefore(mesItem, currentDate) && !isSameMonth(mesItem, currentDate)) {
+                Alert.alert("Ação Proibida", "Não é possível editar ou remover limites de meses anteriores ao atual.");
+                return;
+            }
+    
+            if (type === 'delete') {
+                try {
+                    const response = await fetch(`http://192.168.0.12:9002/limite/remove/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${userData.token}`
+                        }
+                    });
+                    if (response.ok) {
+                        fetchData();
+                    } else {
+                        throw new Error("Falha ao remover dados.");
+                    }
+                } catch (error) {
+                    Alert.alert("Erro de Remoção", error.message);
+                }
+            } else if (type === 'edit') {
+                // Logica para editar aqui
+            }
+        };
+    
+        return (
+            <View style={styles.container}>
+                {isLoading ? <Text>Loading...</Text> : (
+                    <>
+                        <Text style={styles.title}>Limite</Text>
+                        <TextInputMask
+                            type="money"
+                            options={{
+                                precision: 2,
+                                separator: '.',
+                                delimiter: ',',
+                                unit: 'R$ ',
+                                suffixUnit: ''
+                            }}
+                            style={styles.input}
+                            value={valor}
+                            onChangeText={setValor}
+                            placeholder="Valor"
+                            keyboardType="numeric"
                         />
-                    </View>
-                </>
-            )}
-        </View>
-    );
-}
-
+                        <DropDownPicker
+                            open={open}
+                            value={mes}
+                            items={items}
+                            setOpen={setOpen}
+                            setValue={setMes}
+                            setItems={setItems}
+                            placeholder="Selecione um mês"
+                            style={styles.dropdown}
+                            containerStyle={styles.dropdownContainer}
+                        />
+                        <TouchableOpacity style={styles.btn} onPress={register} disabled={!userData || !mes}>
+                            <Text style={styles.btnText}>Salvar</Text>
+                        </TouchableOpacity>
+                        <View style={styles.consulta}>
+                            <Text style={styles.conText}>Consulta</Text>
+                            <FlatList
+                                data={data}
+                                keyExtractor={(item) => item.id.toString()}
+                                renderItem={({ item }) => (
+                                    <MonthCard
+                                        id={item.id}
+                                        mesAno={item.mesReferencia}
+                                        valor={item.limite}
+                                        onEdit={() => editarOuRemover(item.id, item.mesReferencia, 'edit')}
+                                        onDelete={() => editarOuRemover(item.id, item.mesReferencia, 'delete')}
+                                    />
+                                )}
+                                contentContainerStyle={styles.listContainer}
+                            />
+                        </View>
+                    </>
+                )}
+            </View>
+        );
+    }
 const styles = StyleSheet.create({
     container: {
         flex: 1,

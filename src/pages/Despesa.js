@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert} from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import DespesaCard from '../components/DespesaCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import EdicaoDespesa from './edicaoDespesa';
+const [editModalVisible, setEditModalVisible] = useState(false);
+const [currentDespesa, setCurrentDespesa] = useState(null);
 
 export default function Despesa() {
     const [userData, setUserData] = useState(null);
@@ -52,7 +55,17 @@ export default function Despesa() {
     };
 
     useEffect(() => {
-        loadData(); // Carregar os dados do usuário ao montar o componente
+        const loadData = async () => {
+            try {
+                const userJson = await AsyncStorage.getItem('userData');
+                if (userJson !== null) {
+                    setUserData(JSON.parse(userJson));
+                }
+            } catch (error) {
+                console.log("Erro ao carregar dados: ", error);
+            }
+        };
+        loadData();
     }, []);
 
     useEffect(() => {
@@ -62,90 +75,101 @@ export default function Despesa() {
     }, [userData]);
 
     const fetchDespesas = async () => {
-        if (userData) {
-            const header = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${userData.token}`
-            };
-
-            try {
-                const response = await fetch(`http://192.168.0.12:9002/despesa/get?userId=${userData.id}`, {
-                    method: 'GET',
-                    headers: header
-                });
-
-                if (response.ok) {
-                    const json = await response.json();
-                    setData(json);
-                } else {
-                    console.log('Erro ao buscar despesas', response.status);
-                }
-            } catch (error) {
-                console.error('Erro na requisição:', error);
+        const header = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userData.token}`
+        };
+        try {
+            const response = await fetch(`http://192.168.0.12:9002/despesa/get?userId=${userData.id}`, {
+                method: 'GET',
+                headers: header
+            });
+            if (response.ok) {
+                const json = await response.json();
+                setData(json);
+            } else {
+                console.log('Erro ao buscar despesas', response.status);
             }
+        } catch (error) {
+            console.error('Erro na requisição:', error);
         }
     };
 
     const register = async () => {
-        if (userData) {
-            const body = {
-                userId: userData.id,
-                descricao: descricao,
-                valor: valor,
-                mesReferencia: mes
-            };
-            const header = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${userData.token}`
-            };
-            try {
-                const response = await fetch('http://192.168.48.198:9002/despesa/register', {
-                    method: 'POST',
-                    headers: header,
-                    body: JSON.stringify(body)
-                });
-                if (response.ok) {
-                    const json = await response.json();
-                    setDescricao('')
-                    setMes(null)
-                    setValor('')
-                    fetchDespesas();
-                } else {
-                    console.log('Erro ao registrar despesa', response.status);
-                }
-            } catch (error) {
-                console.error('Erro na requisição:', error);
+        if (!mes) {
+            Alert.alert("Erro", "Por favor, selecione um mês.");
+            return;
+        }
+        const body = {
+            userId: userData.id,
+            descricao: descricao,
+            valor: valor,
+            mesReferencia: mes
+        };
+        const header = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userData.token}`
+        };
+        try {
+            const response = await fetch('http://192.168.0.12:9002/despesa/register', {
+                method: 'POST',
+                headers: header,
+                body: JSON.stringify(body)
+            });
+            if (response.ok) {
+                setDescricao('');
+                setMes(null);
+                setValor('');
+                fetchDespesas();
+            } else {
+                console.log('Erro ao registrar despesa', response.status);
             }
-        } else {
-            console.log('Dados do usuário ou mês ausentes');
+        } catch (error) {
+            console.error('Erro na requisição:', error);
         }
     };
 
-    const remover = async (id) => {
-        if (userData) {
-            const header = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${userData.token}`
-            };
-            try {
-                const response = await fetch(`http://192.168.48.198:9002/despesa/remove?id=${id}`, {
-                    method: 'DELETE',
-                    headers: header
-                });
-                if (response.ok) {
-                    console.log("Despesa removida");
-                    fetchDespesas(); 
-                } else {
-                    console.log('Erro ao remover despesa', response.status);
-                }
-            } catch (error) {
-                console.error('Erro na requisição:', error);
+    const remover = (id) => {
+        Alert.alert("Confirmar Exclusão", "Tem certeza que deseja excluir esta despesa?",
+            [
+                { text: "Cancelar", style: "cancel" },
+                { text: "Excluir", onPress: () => confirmDelete(id) }
+            ]
+        );
+    };
+
+    const confirmDelete = async (id) => {
+        const header = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userData.token}`
+        };
+        try {
+            const response = await fetch(`http://192.168.0.12:9002/despesa/remove?id=${id}`, {
+                method: 'DELETE',
+                headers: header
+            });
+            if (response.ok) {
+                Alert.alert("Despesa Removida", "Despesa removida com sucesso!");
+                fetchDespesas();
+            } else {
+                Alert.alert("Erro", 'Erro ao remover despesa: ' + response.statusText);
             }
+        } catch (error) {
+            console.error('Erro na requisição:', error);
+            Alert.alert("Erro", "Falha na conexão com o servidor");
         }
     };
+    
 
     return (
         <View style={styles.container}>
+            <EdicaoDespesa
+                visible={editModalVisible}
+                onClose={closeEditModal}
+                despesa={currentDespesa}
+                onSave={handleSaveDespesa}
+                items={items}
+            />
             <Text style={styles.title}>Despesa</Text>
             <TextInput
                 style={styles.input}
@@ -183,8 +207,8 @@ export default function Despesa() {
                         <DespesaCard
                             name={item.descricao}
                             value={item.valor}
-                            onEdit={() => console.log('editar')}
-                            onDelete={() => remover(item.id)} // Corrigir a chamada onDelete
+                            onEdit={() => openEditModal(item)}
+                            onDelete={() => remover(item.id)}
                         />
                     )}
                     contentContainerStyle={styles.flatListContainer}
@@ -192,6 +216,7 @@ export default function Despesa() {
             </View>
         </View>
     );
+    
 }
 
 const styles = StyleSheet.create({

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bar } from 'react-native-progress';
 import { useFocusEffect } from '@react-navigation/native';
@@ -13,66 +13,59 @@ export default function Home({ navigation }) {
     const loadData = async () => {
         try {
             const userJson = await AsyncStorage.getItem('userData');
-            if (userJson !== null) {
+            if (userJson) {
                 const parsedData = JSON.parse(userJson);
                 setUserData(parsedData);
-                console.log('User data loaded:', parsedData);
             } else {
-                console.log('No user data found in AsyncStorage');
+                Alert.alert('Aviso', 'Nenhum dado de usuário encontrado no armazenamento.');
             }
         } catch (error) {
+            Alert.alert('Erro', 'Falha ao carregar dados do usuário.');
             console.error("Erro ao carregar dados: ", error);
         }
     };
 
     const fetchDespesas = async () => {
-        try {
-            if (userData && userData.token) {
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userData.token}`
-                };
+        if (userData?.token) {
+            try {
                 const response = await fetch('http://192.168.0.12:9002/despesa/current-month', {
                     method: 'GET',
-                    headers: headers
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userData.token}`
+                    }
                 });
-
                 if (response.ok) {
-                    const data = await response.json();
-                    console.log('Despesas:', data);
-                    setValor(Number(data)); // Supondo que `valor` seja um campo no objeto `data`
+                    const valorAtual = await response.json();
+                    setValor(Number(valorAtual)); 
                 } else {
                     console.error("Erro ao buscar despesas: ", response.statusText);
                 }
+            } catch (error) {
+                console.error("Erro ao buscar dados do backend: ", error);
             }
-        } catch (error) {
-            console.error("Erro ao buscar dados do backend: ", error);
         }
     };
 
     const fetchLimites = async () => {
-        try {
-            if (userData && userData.token) {
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userData.token}`
-                };
-                const response = await fetch('http://192.168.48.198:9002/limite/current-month', {
+        if (userData?.token) {
+            try {
+                const response = await fetch('http://192.168.0.12:9002/limite/current-month', {
                     method: 'GET',
-                    headers: headers
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userData.token}`
+                    }
                 });
-
-                console.log(response.status)
                 if (response.ok) {
-                    const data = await response.json();
-                    console.log('Limites:', data);
-                    setTotal(Number(data)); // Supondo que `total` seja um campo no objeto `data`
+                    const totalAtual = await response.json();
+                    setTotal(Number(totalAtual)); 
                 } else {
                     console.error("Erro ao buscar limites: ", response.statusText);
                 }
+            } catch (error) {
+                console.error("Erro ao buscar dados do backend: ", error);
             }
-        } catch (error) {
-            console.error("Erro ao buscar dados do backend: ", error);
         }
     };
 
@@ -81,8 +74,8 @@ export default function Home({ navigation }) {
     }, []);
 
     useEffect(() => {
-        if (valor !== null && total !== null) {
-            calcular();
+        if (total > 0 && valor !== null) {
+            setEconomizou(total - valor);
         }
     }, [valor, total]);
 
@@ -92,16 +85,8 @@ export default function Home({ navigation }) {
                 fetchDespesas();
                 fetchLimites();
             }
-        }, [userData])
+        }, [userData, fetchDespesas, fetchLimites])
     );
-
-    const calcular = () => {
-        if (total > 0) {
-            setEconomizou(total - valor);
-        } else {
-            setEconomizou(0);
-        }
-    };
 
     return (
         <View style={styles.container}>
@@ -125,6 +110,7 @@ export default function Home({ navigation }) {
         </View>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {
