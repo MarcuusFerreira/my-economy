@@ -3,7 +3,6 @@ import { StyleSheet, Text, View, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bar } from 'react-native-progress';
 import { useFocusEffect } from '@react-navigation/native';
-import { Picker } from '@react-native-picker/picker';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 export default function Home({ navigation }) {
@@ -11,10 +10,10 @@ export default function Home({ navigation }) {
     const [valor, setValor] = useState(0);
     const [total, setTotal] = useState(0);
     const [economizou, setEconomizou] = useState(0);
-    const [mesSelecionado, setMesSelecionado] = useState('');
     const [mes, setMes] = useState(null);
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState([]);
+    const [dadosMeses, setDadosMeses] = useState([]);
 
     const loadData = async () => {
         try {
@@ -31,32 +30,9 @@ export default function Home({ navigation }) {
         }
     };
 
-    const fetchDespesas = async () => {
-        if (userData?.token) {
-            try {
-                const response = await fetch(`${URL}/despesa/current-month`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${userData.token}`
-                    }
-                });
-                if (response.ok) {
-                    const valorAtual = await response.json();
-                    setValor(Number(valorAtual));
-                } else {
-                    Alert.alert("Erro ao buscar despesas", response.statusText);
-                }
-            } catch (error) {
-                Alert.alert("Erro de Conexão", "Não foi possível conectar ao servidor para buscar despesas.");
-                console.error("Erro ao buscar dados do backend: ", error);
-            }
-        }
-    };
-
     const fetchFiltro = async () => {
         try {
-            const response = await fetch(`http://192.168.0.138:9002/limite/lista-filtro?userId=${userData.id}`, {
+            const response = await fetch(`http://192.168.0.138:9002/resumo/consulta?userId=${userData.id}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -65,8 +41,9 @@ export default function Home({ navigation }) {
             });
             if (response.ok) {
                 const jsonResponse = await response.json();
+                setDadosMeses(jsonResponse);
                 const formattedData = jsonResponse.map(item => ({
-                    label: item.mesAnoText,
+                    label: item.mesReferenciaText,
                     value: item.mesReferencia
                 }));
                 setItems(formattedData);
@@ -76,28 +53,15 @@ export default function Home({ navigation }) {
         } catch (error) {
             Alert.alert("Erro", error.message);
         }
-    }
+    };
 
-    const fetchLimites = async () => {
-        if (userData?.token) {
-            try {
-                const response = await fetch(`http://192.168.0.138:9002/limite/current-month`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${userData.token}`
-                    }
-                });
-                if (response.ok) {
-                    const totalAtual = await response.json();
-                    setTotal(Number(totalAtual));
-                } else {
-                    // Alert.alert("Erro ao buscar limites", response.statusText);
-                }
-            } catch (error) {
-                Alert.alert("Erro de Conexão", "Não foi possível conectar ao servidor para buscar limites.");
-                console.error("Erro ao buscar dados do backend: ", error);
-            }
+    const handleMesChange = (value) => {
+        setMes(value);
+        const mesSelecionado = dadosMeses.find(item => item.mesReferencia === value);
+        if (mesSelecionado) {
+            setValor(mesSelecionado.totalDespesa);
+            setTotal(mesSelecionado.limite);
+            setEconomizou(mesSelecionado.economizado);
         }
     };
 
@@ -105,17 +69,9 @@ export default function Home({ navigation }) {
         loadData();
     }, []);
 
-    useEffect(() => {
-        if (total > 0 && valor !== null) {
-            setEconomizou(Math.max(0, total - valor));
-        }
-    }, [valor, total]);
-
     useFocusEffect(
         useCallback(() => {
             if (userData) {
-                fetchDespesas();
-                fetchLimites();
                 fetchFiltro();
             }
         }, [userData])
@@ -135,6 +91,7 @@ export default function Home({ navigation }) {
                 items={items}
                 setItems={setItems}
                 placeholder='Selecione um mês'
+                onChangeValue={handleMesChange}
                 style={styles.dropdown}
             />
             <View style={styles.box}>
@@ -153,6 +110,8 @@ export default function Home({ navigation }) {
                 unfilledColor='#e0e0e0'
                 borderWidth={0}
             />
+            <Text style={styles.economizadoLabel}>Total Economizado</Text>
+            <Text style={styles.economizadoText}>R${economizou}</Text>
         </View>
     );
 }
@@ -206,5 +165,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#000',
         marginBottom: 10,
+    },
+    economizadoLabel: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginTop: 20,
+    },
+    economizadoText: {
+        fontSize: 16,
+        color: '#000',
+        marginTop: 10,
     }
 });

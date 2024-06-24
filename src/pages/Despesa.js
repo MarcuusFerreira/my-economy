@@ -208,16 +208,17 @@ const abrirModalEdicao = async (item) => {
 const saveEdit = async () => {
     try {
         const body = JSON.stringify({
-            descricao: editDescricao,
-            valor: editValor,
-            mesReferencia: editMes,
             id: editId,
-            userId: userData.id
+            userId: userData.id,
+            descricao: editDescricao,
+            valor: parseFloat(editValor.replace(/[R$ ,.]/g, '')) / 100,
+            mesReferencia: editMes
         })
         const header = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${userData.token}`
         }
+        console.log(body)
         const response = await fetch('http://192.168.0.138:9002/despesa/update', {
             method: 'PUT',
             headers: header,
