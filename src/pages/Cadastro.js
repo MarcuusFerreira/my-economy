@@ -63,7 +63,7 @@ export default function Cadastro({ navigation }) {
         }
 
         const date = `${ano}-${mes}-${dia}`;
-        const URL = 'http://192.168.0.12:9002/singup';
+        const URL = `http://192.168.0.138:9002/singup`;
         const header = {
             'Content-Type': 'application/json'
         };

@@ -7,7 +7,7 @@ export default function Login({ navigation }) {
   const [password, setPassword] = useState('');
 
   const entrar = async () => {
-    const URL = 'http://192.168.0.12:9002/singin';
+    const URL = `http://192.168.0.138:9002/singin`;
     const headers = {
       'Content-Type': 'application/json'
     };
@@ -28,7 +28,6 @@ export default function Login({ navigation }) {
         saveData(jsonResponse);
         navigation.navigate("Main");
       } else {
-        
         Alert.alert("Erro de Login", "Email ou senha incorretos.");
       }
     } catch (error) {

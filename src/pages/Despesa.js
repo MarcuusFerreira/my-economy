@@ -3,6 +3,8 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert} f
 import DropDownPicker from 'react-native-dropdown-picker';
 import DespesaCard from '../components/DespesaCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TextInputMask } from 'react-native-masked-text';
+import EditDespesaModal from '../components/EditDespesaModal'
 
 export default function Despesa() {
 const [userData, setUserData] = useState(null);
@@ -10,33 +12,16 @@ const [descricao, setDescricao] = useState('');
 const [valor, setValor] = useState('');
 const [mes, setMes] = useState(null);
 const [open, setOpen] = useState(false);
-const [items, setItems] = useState([
-{ label: 'Janeiro/2024', value: '2024-01' },
-{ label: 'Fevereiro/2024', value: '2024-02' },
-{ label: 'Março/2024', value: '2024-03' },
-{ label: 'Abril/2024', value: '2024-04' },
-{ label: 'Maio/2024', value: '2024-05' },
-{ label: 'Junho/2024', value: '2024-06' },
-{ label: 'Julho/2024', value: '2024-07' },
-{ label: 'Agosto/2024', value: '2024-08' },
-{ label: 'Setembro/2024', value: '2024-09' },
-{ label: 'Outubro/2024', value: '2024-10' },
-{ label: 'Novembro/2024', value: '2024-11' },
-{ label: 'Dezembro/2024', value: '2024-12' },
-{ label: 'Janeiro/2026', value: '2025-01' },
-{ label: 'Fevereiro/2025', value: '2025-02' },
-{ label: 'Março/2025', value: '2025-03' },
-{ label: 'Abril/2025', value: '2025-04' },
-{ label: 'Maio/2025', value: '2025-05' },
-{ label: 'Junho/2025', value: '2025-06' },
-{ label: 'Julho/2025', value: '2025-07' },
-{ label: 'Agosto/2025', value: '2025-08' },
-{ label: 'Setembro/2025', value: '2025-09' },
-{ label: 'Outubro/2025', value: '2025-10' },
-{ label: 'Novembro/2025', value: '2025-11' },
-{ label: 'Dezembro/2025', value: '2025-12' }
-]);
+const [items, setItems] = useState([]);
 const [data, setData] = useState([]);
+const [isModalVisible, setIsModalVisible] = useState(false);
+const [editId, setEditId] = useState(null);
+const [editDescricao, setEditDescricao] = useState(null)
+const [editValor, setEditValor] = useState('');
+const [editMes, setEditMes] = useState(null);
+const [openFiltro, setOpenFiltro] = useState(false)
+const [mesFiltro, setMesFiltro] = useState(null)
+const [itemsFiltro, setItemsFiltro] = useState([])
 
 const loadData = async () => {
     try {
@@ -68,6 +53,8 @@ useEffect(() => {
 useEffect(() => {
     if (userData) {
         fetchDespesas();
+        fetchMesDropData();
+        fetchFiltroData();
     }
 }, [userData]);
 
@@ -77,7 +64,7 @@ const fetchDespesas = async () => {
         'Authorization': `Bearer ${userData.token}`
     };
     try {
-        const response = await fetch(`http://192.168.0.12:9002/despesa/get?userId=${userData.id}`, {
+        const response = await fetch(`http://192.168.0.138:9002/despesa/get?userId=${userData.id}`, {
             method: 'GET',
             headers: header
         });
@@ -92,6 +79,54 @@ const fetchDespesas = async () => {
     }
 };
 
+const fetchMesDropData = async () => {
+    try {
+        const response = await fetch(`http://192.168.0.138:9002/limite/lista-filtro?userId=${userData.id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userData.token}`
+            }
+        });
+        if (response.ok) {
+            const jsonResponse = await response.json();
+            const formattedData = jsonResponse.map(item => ({
+                label: item.mesAnoText,
+                value: item.mesReferencia
+            }));
+            setItems(formattedData);
+        } else {
+            throw new Error("Falha ao buscar dados do filtro.");
+        }
+    } catch (error) {
+        Alert.alert("Erro", error.message);
+    }
+};
+
+const fetchFiltroData = async () => {
+    try {
+        const response = await fetch(`http://192.168.0.138:9002/limite/lista-filtro?userId=${userData.id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userData.token}`
+            }
+        });
+        if (response.ok) {
+            const jsonResponse = await response.json();
+            const formattedData = jsonResponse.map(item => ({
+                label: item.mesAnoText,
+                value: item.mesReferencia
+            }));
+            setItemsFiltro(formattedData);
+        } else {
+            throw new Error("Falha ao buscar dados do filtro.");
+        }
+    } catch (error) {
+        Alert.alert("Erro", error.message);
+    }
+};
+
 const register = async () => {
     if (!mes) {
         Alert.alert("Erro", "Por favor, selecione um mês.");
@@ -100,7 +135,7 @@ const register = async () => {
     const body = {
         userId: userData.id,
         descricao: descricao,
-        valor: valor,
+        valor: parseFloat(valor.replace(/[R$ ,.]/g, '')) / 100,
         mesReferencia: mes
     };
     const header = {
@@ -108,7 +143,7 @@ const register = async () => {
         'Authorization': `Bearer ${userData.token}`
     };
     try {
-        const response = await fetch('http://192.168.0.12:9002/despesa/register', {
+        const response = await fetch(`http://192.168.0.138:9002/despesa/register`, {
             method: 'POST',
             headers: header,
             body: JSON.stringify(body)
@@ -117,8 +152,11 @@ const register = async () => {
             setDescricao('');
             setMes(null);
             setValor('');
-            fetchDespesas();
+            Alert.alert("Concluido", "Despesa cadastrada com sucesso!")
+            fetchDespesas()
         } else {
+            const jsonResponse = await response.json()
+            Alert.alert("Erro", jsonResponse.message)
             console.log('Erro ao registrar despesa', response.status);
         }
     } catch (error) {
@@ -135,13 +173,52 @@ const remover = (id) => {
     );
 };
 
+const abrirModalEdicao = async (item) => {
+    setEditId(item.id)
+    setEditDescricao(item.descricao)
+    setEditValor(item.valor.toString())
+    setEditMes(item.mesReferencia)
+    setIsModalVisible(true)
+}
+
+const saveEdit = async () => {
+    try {
+        const body = JSON.stringify({
+            descricao: editDescricao,
+            valor: editValor,
+            mesReferencia: editMes,
+            id: editId,
+            userId: userData.id
+        })
+        const header = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userData.token}`
+        }
+        const response = await fetch('http://192.168.0.138:9002/despesa/update', {
+            method: 'PUT',
+            headers: header,
+            body: body
+        })
+        const jsonResponse = await response.json()
+        if(response.ok) {
+            fetchDespesas()
+            setIsModalVisible(false)
+            Alert.alert("Concluido", jsonResponse.message)
+        } else {
+            Alert.alert("Erro ao atualizar", jsonResponse.message)
+        }
+    } catch(error) {
+        Alert.alert("Erro de atualizar despesa", error.message)
+    }
+}
+
 const confirmDelete = async (id) => {
     const header = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${userData.token}`
     };
     try {
-        const response = await fetch(`http://192.168.0.12:9002/despesa/remove?id=${id}`, {
+        const response = await fetch(`http://192.168.0.138:9002/despesa/remove?id=${id}`, {
             method: 'DELETE',
             headers: header
         });
@@ -160,6 +237,7 @@ const confirmDelete = async (id) => {
 
 return (
     <View style={styles.container}>
+        <>
         <Text style={styles.title}>Despesa</Text>
         <TextInput
             style={styles.input}
@@ -168,10 +246,18 @@ return (
             placeholder="Descrição"
             keyboardType="default"
         />
-        <TextInput
+        <TextInputMask
+            type="money"
+            options={{
+                precision: 2,
+                separator: '.',
+                delimiter: ',',
+                unit: 'R$ ',
+                suffixUnit: ''
+            }}
             style={styles.input}
-            onChangeText={setValor}
             value={valor}
+            onChangeText={setValor}
             placeholder="Valor"
             keyboardType="numeric"
         />
@@ -190,6 +276,16 @@ return (
         </TouchableOpacity>
         <View style={styles.hist}>
             <Text style={styles.histTitle}>Histórico</Text>
+            <DropDownPicker
+                open={openFiltro}
+                value={mesFiltro}
+                items={itemsFiltro}
+                setOpen={setOpenFiltro}
+                setValue={setMesFiltro}
+                setItems={setItemsFiltro}
+                placeholder="Selecione um mês"
+                style={styles.dropdown}
+            />
             <FlatList
                 data={data}
                 keyExtractor={(item) => item.id.toString()}
@@ -197,13 +293,27 @@ return (
                     <DespesaCard
                         name={item.descricao}
                         value={item.valor}
-                        onEdit={() => console.log('editar')}
-                        onDelete={() => remover(item.id)} // Corrigir a chamada onDelete
+                        onEdit={() => abrirModalEdicao(item)}
+                        onDelete={() => remover(item.id)}
                     />
                 )}
                 contentContainerStyle={styles.flatListContainer}
             />
         </View>
+        <EditDespesaModal
+            isVisible={isModalVisible}
+            onClose={() => setIsModalVisible(false)}
+            onSave={saveEdit}
+            descricao={editDescricao}
+            setDescricao={setEditDescricao}
+            valor={editValor}
+            setValor={setEditValor}
+            mes={editMes}
+            setMes={setEditMes}
+            items={items}
+            setItems={setItems}
+        />
+        </>
     </View>
 );
 }

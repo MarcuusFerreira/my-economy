@@ -29,30 +29,32 @@ export default function Perfil({ navigation }) {
     }
 
     const sair = async () => {
-        const URL = `http://192.168.0.12:9002/singout`
-        const response = await fetch(URL, {
+        const url = `http://192.168.0.138:9002/singout`;
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${userData.token}`
             }
-    })
-    if (response.ok) {
-        navigation.navigate('Login')
-    }
+        });
+        if (response.ok) {
+            navigation.navigate('Login');
+        }
     };
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Meus Dados</Text>
-            <Text style={styles.label}>Nome</Text>
-            <Text style={styles.data}>{userData.name}</Text>
-            <Text style={styles.label}>Email</Text>
-            <Text style={styles.data}>{userData.email}</Text>
-            <Text style={styles.label}>Data de Nascimento</Text>
-            <Text style={styles.data}>{new Date(userData.birthday).toLocaleDateString()}</Text>
+            <View style={styles.containerdata}>
+                <Text style={styles.label}>Nome</Text>
+                <Text style={styles.data}>{userData.name}</Text>
+                <Text style={styles.label}>Email</Text>
+                <Text style={styles.data}>{userData.email}</Text>
+                <Text style={styles.label}>Data de Nascimento</Text>
+                <Text style={styles.data}>{new Date(userData.birthday).toLocaleDateString()}</Text>
+                </View>
             <TouchableOpacity style={styles.button} onPress={sair}>
-                <Text style={styles.btnText} onPress={sair}>SAIR</Text>
+                <Text style={styles.btnText}>SAIR</Text>
             </TouchableOpacity>
         </View>
     );
@@ -61,31 +63,68 @@ export default function Perfil({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#fff',
         alignItems: 'center',
         justifyContent: 'center',
+        padding: 20
     },
     title: {
-        fontSize: 30,
+        fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 16
+        marginBottom: 24,
+        color: '#000'
     },
     label: {
-        fontSize: 20,
-        marginBottom: 8
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 4,
+        color: '#000',
+        textAlign: 'left',
+        width: '100%'
+    },
+    containerdata: {
+        width: '80%',
+        alignItems: 'flex-start'
     },
     data : {
-        fontSize: 14,
-        marginBottom: 12
+        fontSize: 16,
+        marginBottom: 16,
+        color: '#000',
+        textAlign: 'left',
+        width: '100%'
     },
     button: {
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 12,
+        borderRadius: 8,
         backgroundColor: '#4CAF50',
-        width: '60%',
-        height: 40,
+        width: '80%',
+        height: 45,
+        marginTop: 20,
     },
     btnText: {
-        color: '#FFF'
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold'
+    },
+    footer: {
+        position: 'absolute',
+        bottom: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        paddingHorizontal: 20,
+    },
+    iconButton: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#4CAF50',
+        borderRadius: 25,
+        width: 50,
+        height: 50,
+    },
+    iconText: {
+        color: '#FFF',
+        fontSize: 24
     }
 });
