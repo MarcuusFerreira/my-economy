@@ -58,6 +58,30 @@ useEffect(() => {
     }
 }, [userData]);
 
+useEffect(() => {
+    if(mesFiltro) {
+        const fetchCardDespesas = async () => {
+            try {
+                const response = await fetch(`http://192.168.0.138:9002/despesa/get-despesa?userId=${userData.id}&mesReferencia=${mesFiltro}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userData.token}`
+                    }
+                })
+                if(response.ok) {
+                    const jsonResponse = await response.json()
+                    setData([])
+                    setData(jsonResponse)
+                }
+            } catch (error) {
+                Alert.alert('Erro', 'Erro ao buscar os filtros')
+            }
+        }
+        fetchCardDespesas()
+    }
+}, [mesFiltro, userData])
+
 const fetchDespesas = async () => {
     const header = {
         'Content-Type': 'application/json',

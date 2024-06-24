@@ -65,7 +65,6 @@ export default function Limite() {
         loadData();
     }, []);
 
-    // Carregar dados de limite e filtro sempre que a tela ganhar foco
     useFocusEffect(
         useCallback(() => {
             if (userData) {
@@ -74,6 +73,35 @@ export default function Limite() {
             }
         }, [userData])
     );
+
+    useEffect(() => {
+        // Fetch data when mesFiltro changes
+        if (mesFiltro) {
+            const fetchCardLimites = async () => {
+                try {
+                    const response = await fetch(`http://192.168.0.138:9002/limite/get-limite?userId=${userData.id}&mesReferencia=${mesFiltro}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${userData.token}`
+                        }
+                    });
+                    if (response.ok) {
+                        const jsonResponse = await response.json();
+                        setData([])
+                        setData(jsonResponse);
+                    } else {
+                        throw new Error("Erro ao buscar limites para o mês selecionado.");
+                    }
+                } catch (error) {
+                    Alert.alert("Erro de requsição", error.message);
+                } finally {
+                    setIsFiltroLoading(false);
+                }
+            };
+            fetchCardLimites();
+        }
+    }, [mesFiltro, userData]);
 
     const fetchData = async () => {
         try {
@@ -264,7 +292,7 @@ export default function Limite() {
                             placeholder='Selecione o mês'
                             style={styles.dropdown}
                             containerStyle={styles.dropdownContainer}
-                            disabled={isFiltroLoading} // Desabilitar enquanto está carregando
+                            disabled={isFiltroLoading}
                         />
                         {isFiltroLoading ? <Text>Carregando...</Text> : null}
                         <FlatList
